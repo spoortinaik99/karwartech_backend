@@ -70,17 +70,26 @@ app.post('/upload', upload.single('file'), (req, res) => {
 });
 
 // GET endpoint to fetch added data
-app.get('/added-data', (req, res) => {
-  // Fetch data from MongoDB
-  Mobile.find({})
-    .then(data => {
-      res.status(200).json(data);
-    })
-    .catch(err => {
-      console.error('Error fetching added data:', err);
+app.get('/added-data', async (req, res) => {
+  try {
+    // Fetch data from MongoDB with increased timeout
+    const data = await Mobile.find({}).maxTimeMS(30000); // Set timeout to 30 seconds
+
+    // Send response with fetched data
+    res.status(200).json(data);
+  } catch (err) {
+    // Handle errors
+    console.error('Error fetching added data:', err);
+
+    // Check if the error is a timeout error
+    if (err.name === 'MongooseError' && err.message.includes('buffering timed out')) {
+      res.status(500).json({ error: 'Timeout error occurred while fetching data' });
+    } else {
       res.status(500).json({ error: 'Failed to fetch added data' });
-    });
+    }
+  }
 });
+
 
 // Delete endpoint to clear all data
 app.delete('/clear-data', (req, res) => {
