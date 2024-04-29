@@ -5,14 +5,14 @@ const path = require('path');
 const mongoose = require('mongoose');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Enable CORS and JSON parsing middleware
 app.use(cors());
 app.use(express.json());
 app.use('/Images', express.static(path.join(__dirname, 'Images')));
 // Connect to MongoDB
-mongoose.connect('mongodb+srv://naiksahil660:zFOd8pkvMqhyUslY@cluster0.3mp1f5v.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
+mongoose.connect('mongodb+srv://naiksahil660:zFOd8pkvMqhyUslY@cluster0.3mp1f5v.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/mobile_gallery', {
     useNewUrlParser: true,
     useUnifiedTopology: true
 })
