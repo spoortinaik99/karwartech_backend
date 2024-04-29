@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/Images', express.static(path.join(__dirname, 'Images')));
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/mobile_gallery', {
+mongoose.connect('mongodb+srv://naiksahil660:zFOd8pkvMqhyUslY@cluster0.3mp1f5v.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
     useNewUrlParser: true,
     useUnifiedTopology: true
 })
