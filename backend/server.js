@@ -21,9 +21,9 @@ mongoose.connect('mongodb+srv://naiksahil660:zFOd8pkvMqhyUslY@cluster0.3mp1f5v.m
 
 // Define schema for mobile data
 const mobileSchema = new mongoose.Schema({
-  name: String,
-  price: String,
-  filePaths: [String] // Changed from filePath to filePaths
+    name: String,
+    price: String,
+    filePath: [String]
 });
 
 // Create model from schema
@@ -42,41 +42,31 @@ const storage = multer.diskStorage({
 });
 
 // Initialize Multer middleware with storage configuration
-const upload = multer({ storage }).array('files', 5); // Allow up to 5 files
+const upload = multer({ storage });
 
-app.post('/upload', (req, res) => {
-  upload(req, res, function (err) {
-    if (err instanceof multer.MulterError) {
-      // A Multer error occurred when uploading
-      console.error('Multer Error:', err);
-      return res.status(500).json({ error: 'File upload error' });
-    } else if (err) {
-      // An unknown error occurred
-      console.error('Unknown Error:', err);
-      return res.status(500).json({ error: 'Unknown error occurred' });
-    }
+app.post('/upload', upload.array('files'), (req, res) => {
+  // Log the uploaded files details
+  console.log('Uploaded files:', req.files);
 
-    // Log the uploaded files details
-    console.log('Uploaded files:', req.files);
-
-    // Access additional form data like name and price from req.body
-    const { name, price } = req.body;
-    console.log('Name:', name);
-    console.log('Price:', price);
-
-    // Save uploaded data to MongoDB
-    Mobile.create({ name, price, filePaths: req.files.map(file => file.path) })
-      .then(mobile => {
-        console.log('Mobile added successfully:', mobile);
-        res.status(200).json({ 
-          message: 'Files uploaded successfully', 
-          mobile: mobile
-        });
-      })
-      .catch(err => {
-        console.error('Error adding mobile:', err);
-        res.status(500).json({ error: 'Failed to add mobile' });
-      });
+  // Access additional form data like name and price from req.body
+  const { name, price } = req.body;
+  console.log('Name:', name);
+  console.log('Price:', price);
+  
+  // Save uploaded data to MongoDB
+  Promise.all(req.files.map(file => {
+    return Mobile.create({ name, price, filePath: file.path });
+  }))
+  .then(mobiles => {
+    console.log('Mobiles added successfully:', mobiles);
+    res.status(200).json({ 
+      message: 'Files uploaded successfully', 
+      mobiles: mobiles
+    });
+  })
+  .catch(err => {
+    console.error('Error adding mobiles:', err);
+    res.status(500).json({ error: 'Failed to add mobiles' });
   });
 });
 // GET endpoint to fetch added data
