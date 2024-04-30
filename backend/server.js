@@ -21,9 +21,9 @@ mongoose.connect('mongodb+srv://naiksahil660:zFOd8pkvMqhyUslY@cluster0.3mp1f5v.m
 
 // Define schema for mobile data
 const mobileSchema = new mongoose.Schema({
-    name: String,
-    price: String,
-    filePath: [String]
+  name: String,
+  price: String,
+  filePaths: [String] // Changed from filePath to filePaths
 });
 
 // Create model from schema
@@ -65,20 +65,18 @@ app.post('/upload', (req, res) => {
     console.log('Price:', price);
 
     // Save uploaded data to MongoDB
-    Promise.all(req.files.map(file => {
-      return Mobile.create({ name, price, filePath: file.path });
-    }))
-    .then(mobiles => {
-      console.log('Mobiles added successfully:', mobiles);
-      res.status(200).json({ 
-        message: 'Files uploaded successfully', 
-        mobiles: mobiles
+    Mobile.create({ name, price, filePaths: req.files.map(file => file.path) })
+      .then(mobile => {
+        console.log('Mobile added successfully:', mobile);
+        res.status(200).json({ 
+          message: 'Files uploaded successfully', 
+          mobile: mobile
+        });
+      })
+      .catch(err => {
+        console.error('Error adding mobile:', err);
+        res.status(500).json({ error: 'Failed to add mobile' });
       });
-    })
-    .catch(err => {
-      console.error('Error adding mobiles:', err);
-      res.status(500).json({ error: 'Failed to add mobiles' });
-    });
   });
 });
 // GET endpoint to fetch added data
