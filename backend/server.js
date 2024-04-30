@@ -98,6 +98,22 @@ app.delete('/clear-data', (req, res) => {
     });
 });
 
+//Delete Individual Item
+app.delete('/mobiles/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Find the mobile item by ID and delete it
+    const deletedMobile = await Mobile.findByIdAndDelete(id);
+    if (!deletedMobile) {
+      return res.status(404).json({ error: 'Mobile item not found' });
+    }
+    console.log('Mobile item deleted successfully:', deletedMobile);
+    res.status(200).json({ message: 'Mobile item deleted successfully', mobile: deletedMobile });
+  } catch (err) {
+    console.error('Error deleting mobile item:', err);
+    res.status(500).json({ error: 'Failed to delete mobile item' });
+  }
+});
 // Root endpoint
 app.get('/', (req, res) => {
   res.send('Server is running');
