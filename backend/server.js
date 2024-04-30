@@ -44,10 +44,9 @@ const storage = multer.diskStorage({
 // Initialize Multer middleware with storage configuration
 const upload = multer({ storage });
 
-// POST endpoint for file upload
-app.post('/upload', upload.single('file'), (req, res) => {
-  // Log the uploaded file details
-  console.log('Uploaded file:', req.file);
+app.post('/upload', upload.array('files'), (req, res) => {
+  // Log the uploaded files details
+  console.log('Uploaded files:', req.files);
 
   // Access additional form data like name and price from req.body
   const { name, price } = req.body;
@@ -55,20 +54,21 @@ app.post('/upload', upload.single('file'), (req, res) => {
   console.log('Price:', price);
   
   // Save uploaded data to MongoDB
-  Mobile.create({ name, price, filePath: req.file.path })
-    .then(mobile => {
-      console.log('Mobile added successfully:', mobile);
-      res.status(200).json({ 
-        message: 'File uploaded successfully', 
-        mobile: mobile
-      });
-    })
-    .catch(err => {
-      console.error('Error adding mobile:', err);
-      res.status(500).json({ error: 'Failed to add mobile' });
+  Promise.all(req.files.map(file => {
+    return Mobile.create({ name, price, filePath: file.path });
+  }))
+  .then(mobiles => {
+    console.log('Mobiles added successfully:', mobiles);
+    res.status(200).json({ 
+      message: 'Files uploaded successfully', 
+      mobiles: mobiles
     });
+  })
+  .catch(err => {
+    console.error('Error adding mobiles:', err);
+    res.status(500).json({ error: 'Failed to add mobiles' });
+  });
 });
-
 // GET endpoint to fetch added data
 app.get('/added-data', async (req, res) => {
   try {
