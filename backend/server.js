@@ -44,10 +44,7 @@ const storage = multer.diskStorage({
 // Initialize Multer middleware with storage configuration
 const upload = multer({ storage });
 
-
-
-// POST endpoint for file upload
-app.post('/upload', upload.array('files'), async (req, res) => {
+app.post('/upload', upload.array('files'), (req, res) => {
   // Log the uploaded files details
   console.log('Uploaded files:', req.files);
 
@@ -55,35 +52,23 @@ app.post('/upload', upload.array('files'), async (req, res) => {
   const { name, price } = req.body;
   console.log('Name:', name);
   console.log('Price:', price);
-
-  try {
-    // Check if any mobile already exists with the same name and price combination
-    let existingMobile = await Mobile.findOne({ name, price });
-
-    if (existingMobile) {
-      // If mobile exists, add new file paths to its existing filePaths array
-      existingMobile.filePaths = existingMobile.filePaths.concat(req.files.map(file => file.path));
-      await existingMobile.save();
-      console.log('Mobile updated successfully:', existingMobile);
-      res.status(200).json({ 
-        message: 'Files added to existing mobile successfully', 
-        mobile: existingMobile
-      });
-    } else {
-      // If mobile does not exist, create a new entry
-      const newMobile = await Mobile.create({ name, price, filePaths: req.files.map(file => file.path) });
-      console.log('New mobile added successfully:', newMobile);
-      res.status(200).json({ 
-        message: 'New mobile added successfully', 
-        mobile: newMobile
-      });
-    }
-  } catch (err) {
-    console.error('Error adding/updating mobile:', err);
-    res.status(500).json({ error: 'Failed to add/update mobile' });
-  }
+  
+  // Save uploaded data to MongoDB
+  Promise.all(req.files.map(file => {
+    return Mobile.create({ name, price, filePath: file.path });
+  }))
+  .then(mobiles => {
+    console.log('Mobiles added successfully:', mobiles);
+    res.status(200).json({ 
+      message: 'Files uploaded successfully', 
+      mobiles: mobiles
+    });
+  })
+  .catch(err => {
+    console.error('Error adding mobiles:', err);
+    res.status(500).json({ error: 'Failed to add mobiles' });
+  });
 });
-
 // GET endpoint to fetch added data
 app.get('/added-data', async (req, res) => {
   try {
