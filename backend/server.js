@@ -11,19 +11,22 @@ const PORT = process.env.PORT || 5001;
 app.use(cors());
 app.use(express.json());
 app.use('/Images', express.static(path.join(__dirname, 'Images')));
+
 // Connect to MongoDB
-mongoose.connect('mongodb+srv://naiksahil660:zFOd8pkvMqhyUslY@cluster0.3mp1f5v.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/mobile_gallery', {
+mongoose.connect('mongodb+srv://naiksahil660:zFOd8pkvMqhyUslY@cluster0.3mp1f5v.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/mobile_gallery',
+  {
     useNewUrlParser: true,
     useUnifiedTopology: true
-})
+  }
+)
 .then(() => console.log('MongoDB connected'))
 .catch(err => console.error('MongoDB connection error:', err));
 
 // Define schema for mobile data
 const mobileSchema = new mongoose.Schema({
-    name: String,
-    price: String,
-    filePath: [String]
+  name: String,
+  price: String,
+  filePaths: [String] // Store multiple file paths in an array
 });
 
 // Create model from schema
@@ -44,66 +47,58 @@ const storage = multer.diskStorage({
 // Initialize Multer middleware with storage configuration
 const upload = multer({ storage });
 
-app.post('/upload', upload.array('files'), (req, res) => {
-  // Log the uploaded files details
-  console.log('Uploaded files:', req.files);
-
-  // Access additional form data like name and price from req.body
-  const { name, price } = req.body;
-  console.log('Name:', name);
-  console.log('Price:', price);
+// POST endpoint to handle file upload
+app.post('/upload', upload.array('files'), async (req, res) => {
+  try {
+    // Access additional form data like name and price from req.body
+    const { name, price } = req.body;
   
-  // Save uploaded data to MongoDB
-  Promise.all(req.files.map(file => {
-    return Mobile.create({ name, price, filePath: file.path });
-  }))
-  .then(mobiles => {
-    console.log('Mobiles added successfully:', mobiles);
+    // Extract file paths from req.files
+    const filePaths = req.files.map(file => file.path);
+  
+    // Create a new mobile object with the provided data
+    const mobile = await Mobile.create({ name, price, filePaths });
+  
+    console.log('Mobile added successfully:', mobile);
+  
     res.status(200).json({ 
       message: 'Files uploaded successfully', 
-      mobiles: mobiles
+      mobile: mobile
     });
-  })
-  .catch(err => {
-    console.error('Error adding mobiles:', err);
-    res.status(500).json({ error: 'Failed to add mobiles' });
-  });
-});
-// GET endpoint to fetch added data
-app.get('/added-data', async (req, res) => {
-  try {
-    // Fetch data from MongoDB with increased timeout
-    const data = await Mobile.find({}).maxTimeMS(30000); // Set timeout to 30 seconds
-
-    // Send response with fetched data
-    res.status(200).json(data);
   } catch (err) {
-    // Handle errors
-    console.error('Error fetching added data:', err);
-
-    // Check if the error is a timeout error
-    if (err.name === 'MongooseError' && err.message.includes('buffering timed out')) {
-      res.status(500).json({ error: 'Timeout error occurred while fetching data' });
-    } else {
-      res.status(500).json({ error: 'Failed to fetch added data' });
-    }
+    console.error('Error adding mobile:', err);
+    res.status(500).json({ error: 'Failed to add mobile' });
   }
 });
 
+// GET endpoint to fetch added data
+app.get('/added-data', async (req, res) => {
+  try {
+    // Fetch data from MongoDB
+    const data = await Mobile.find({});
+  
+    // Send response with fetched data
+    res.status(200).json(data);
+  } catch (err) {
+    console.error('Error fetching added data:', err);
+    res.status(500).json({ error: 'Failed to fetch added data' });
+  }
+});
 
 // Delete endpoint to clear all data
 app.delete('/clear-data', (req, res) => {
-    Mobile.deleteMany({})
-        .then(() => {
-            console.log('All mobile data cleared successfully');
-            res.status(200).json({ message: 'All mobile data cleared successfully' });
-        })
-        .catch(err => {
-            console.error('Error clearing mobile data:', err);
-            res.status(500).json({ error: 'Failed to clear mobile data' });
-        });
+  Mobile.deleteMany({})
+    .then(() => {
+      console.log('All mobile data cleared successfully');
+      res.status(200).json({ message: 'All mobile data cleared successfully' });
+    })
+    .catch(err => {
+      console.error('Error clearing mobile data:', err);
+      res.status(500).json({ error: 'Failed to clear mobile data' });
+    });
 });
 
+// Root endpoint
 app.get('/', (req, res) => {
   res.send('Server is running');
 });
