@@ -29,8 +29,14 @@ const mobileSchema = new mongoose.Schema({
   filePaths: [String] // Store multiple file paths in an array
 });
 
-// Create model from schema
+// Define schema for slider images
+const sliderSchema = new mongoose.Schema({
+  filePaths: [String] // Store multiple file paths in an array
+});
+
+// Create models from schemas
 const Mobile = mongoose.model('Mobile', mobileSchema);
+const Slider = mongoose.model('Slider', sliderSchema);
 
 // Multer storage configuration
 const storage = multer.diskStorage({
@@ -47,7 +53,7 @@ const storage = multer.diskStorage({
 // Initialize Multer middleware with storage configuration
 const upload = multer({ storage });
 
-// POST endpoint to handle file upload
+// POST endpoint to handle mobile file upload
 app.post('/upload', upload.array('files'), async (req, res) => {
   try {
     // Access additional form data like name and price from req.body
@@ -68,6 +74,27 @@ app.post('/upload', upload.array('files'), async (req, res) => {
   } catch (err) {
     console.error('Error adding mobile:', err);
     res.status(500).json({ error: 'Failed to add mobile' });
+  }
+});
+
+// POST endpoint to handle slider image upload
+app.post('/upload-slider', upload.array('sliderImages', 6), async (req, res) => {
+  try {
+    // Extract file paths from req.files
+    const filePaths = req.files.map(file => file.path);
+  
+    // Create a new slider object with the provided data
+    const slider = await Slider.create({ filePaths });
+  
+    console.log('Slider images added successfully:', slider);
+  
+    res.status(200).json({ 
+      message: 'Slider images uploaded successfully', 
+      slider: slider
+    });
+  } catch (err) {
+    console.error('Error adding slider images:', err);
+    res.status(500).json({ error: 'Failed to add slider images' });
   }
 });
 
@@ -98,7 +125,7 @@ app.delete('/clear-data', (req, res) => {
     });
 });
 
-//Delete Individual Item
+// Delete individual mobile item
 app.delete('/mobiles/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -114,6 +141,7 @@ app.delete('/mobiles/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to delete mobile item' });
   }
 });
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.send('Server is running');
