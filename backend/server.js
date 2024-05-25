@@ -112,6 +112,19 @@ app.get('/added-data', async (req, res) => {
   }
 });
 
+app.get('/slider-images', async (req, res) => {
+  try {
+    // Fetch slider images from MongoDB
+    const sliderImages = await Slider.find({});
+    
+    // Send response with fetched data
+    res.status(200).json(sliderImages);
+  } catch (err) {
+    console.error('Error fetching slider images:', err);
+    res.status(500).json({ error: 'Failed to fetch slider images' });
+  }
+});
+
 // Delete endpoint to clear all data
 app.delete('/clear-data', (req, res) => {
   Mobile.deleteMany({})
